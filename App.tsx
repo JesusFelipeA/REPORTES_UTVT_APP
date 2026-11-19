@@ -1,11 +1,12 @@
 import { Session } from '@supabase/supabase-js';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, BackHandler, StatusBar, View } from 'react-native';
+import { BackHandler, StatusBar } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { C } from './src/components/ui';
 import { cerrarSesion, obtenerRol } from './src/lib/api';
 import { supabase } from './src/lib/supabase';
 import { Reporte, Rol } from './src/lib/tipos';
+import AcercaDeScreen from './src/screens/AcercaDeScreen';
+import BienvenidaScreen from './src/screens/BienvenidaScreen';
 import DetalleScreen from './src/screens/DetalleScreen';
 import LoginScreen from './src/screens/LoginScreen';
 import NuevoReporteScreen from './src/screens/NuevoReporteScreen';
@@ -16,17 +17,21 @@ type Pantalla =
   | { tipo: 'lista'; mensaje?: string }
   | { tipo: 'nuevo' }
   | { tipo: 'permisos' }
-  | { tipo: 'detalle'; reporte: Reporte };
+  | { tipo: 'detalle'; reporte: Reporte }
+  | { tipo: 'acerca' };
 
 function App() {
   const [sesion, setSesion] = useState<Session | null>(null);
   const [rol, setRol] = useState<Rol>('estudiante');
   const [iniciando, setIniciando] = useState(true);
   const [pantalla, setPantalla] = useState<Pantalla>({ tipo: 'lista' });
+  const [acercaSinSesion, setAcercaSinSesion] = useState(false);
 
   // 1. Al abrir la app: ¿existe una sesión válida guardada en SecureStore?
+  //    La bienvenida se muestra al menos 1.2 s para que se alcance a ver
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
+    const espera = new Promise<void>(r => setTimeout(() => r(), 1200));
+    Promise.all([supabase.auth.getSession(), espera]).then(([{ data }]) => {
       setSesion(data.session);
       setIniciando(false);
     });
@@ -48,6 +53,10 @@ function App() {
   // Botón atrás de Android
   useEffect(() => {
     const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      if (acercaSinSesion) {
+        setAcercaSinSesion(false);
+        return true;
+      }
       if (pantalla.tipo !== 'lista') {
         setPantalla({ tipo: 'lista' });
         return true;
@@ -55,15 +64,14 @@ function App() {
       return false;
     });
     return () => sub.remove();
-  }, [pantalla.tipo]);
+  }, [pantalla.tipo, acercaSinSesion]);
 
   if (iniciando) {
     return (
-      <View
-        style={{ flex: 1, justifyContent: 'center', backgroundColor: C.fondo }}
-      >
-        <ActivityIndicator size="large" color={C.primario} />
-      </View>
+      <>
+        <StatusBar barStyle="light-content" />
+        <BienvenidaScreen />
+      </>
     );
   }
 
@@ -71,7 +79,11 @@ function App() {
     return (
       <>
         <StatusBar barStyle="light-content" />
-        <LoginScreen />
+        {acercaSinSesion ? (
+          <AcercaDeScreen onVolver={() => setAcercaSinSesion(false)} />
+        ) : (
+          <LoginScreen onAcercaDe={() => setAcercaSinSesion(true)} />
+        )}
       </>
     );
   }
@@ -90,10 +102,14 @@ function App() {
           onPermisos={() => setPantalla({ tipo: 'permisos' })}
           onAbrir={reporte => setPantalla({ tipo: 'detalle', reporte })}
           onSalir={() => cerrarSesion(uid)}
+          onAcercaDe={() => setPantalla({ tipo: 'acerca' })}
         />
       )}
       {pantalla.tipo === 'permisos' && (
         <PermisosScreen onVolver={() => setPantalla({ tipo: 'lista' })} />
+      )}
+      {pantalla.tipo === 'acerca' && (
+        <AcercaDeScreen onVolver={() => setPantalla({ tipo: 'lista' })} />
       )}
       {pantalla.tipo === 'nuevo' && (
         <NuevoReporteScreen

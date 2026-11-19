@@ -4,6 +4,7 @@ import {
   Hash,
   Image as IconoImagen,
   Inbox,
+  Info,
   LogOut,
   ShieldCheck,
   MapPin,
@@ -60,6 +61,7 @@ interface Props {
   onPermisos: () => void;
   onAbrir: (r: Reporte) => void;
   onSalir: () => void;
+  onAcercaDe: () => void;
 }
 
 export default function ReportesScreen({
@@ -71,6 +73,7 @@ export default function ReportesScreen({
   onPermisos,
   onAbrir,
   onSalir,
+  onAcercaDe,
 }: Props) {
   const [reportes, setReportes] = useState<Reporte[]>([]);
   const [cargando, setCargando] = useState(true);
@@ -178,6 +181,11 @@ export default function ReportesScreen({
         titulo={rol === 'mantenimiento' ? 'Todos los reportes' : 'Mis reportes'}
         derecha={
           <View style={{ flexDirection: 'row', gap: 8 }}>
+            <BotonIcono
+              Icono={Info}
+              etiqueta="Acerca de"
+              onPress={onAcercaDe}
+            />
             <BotonIcono
               Icono={ShieldCheck}
               etiqueta="Permisos de la app"

@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -13,8 +14,13 @@ import { Aviso, Boton, C, Campo, sombra } from '../components/ui';
 import { iniciarSesion } from '../lib/api';
 import { configCompleta } from '../lib/supabase';
 import { validarLogin } from '../lib/validacion';
+import { APP } from '../version';
 
-export default function LoginScreen() {
+export default function LoginScreen({
+  onAcercaDe,
+}: {
+  onAcercaDe: () => void;
+}) {
   const insets = useSafeAreaInsets();
   const [correo, setCorreo] = useState('');
   const [contrasena, setContrasena] = useState('');
@@ -105,6 +111,11 @@ export default function LoginScreen() {
             Conexión cifrada (HTTPS) · Sesión protegida en el dispositivo
           </Text>
         </View>
+        <Pressable onPress={onAcercaDe} hitSlop={8} style={s.acerca}>
+          <Text style={s.acercaTxt}>
+            Versión {APP.version} · Soporte y aviso de privacidad
+          </Text>
+        </Pressable>
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -160,4 +171,6 @@ const s = StyleSheet.create({
     paddingHorizontal: 20,
   },
   pieTxt: { color: C.suave, fontSize: 12 },
+  acerca: { alignSelf: 'center', marginTop: 14, padding: 6 },
+  acercaTxt: { color: C.primario, fontSize: 12.5, fontWeight: '600' },
 });

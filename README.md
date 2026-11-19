@@ -51,6 +51,27 @@ iOS (solo macOS): `cd ios && bundle install && bundle exec pod install && cd ..`
 
 Pruebas unitarias de validación: `npm test`.
 
+## Versión de distribución (Actividad 28)
+
+**Versión 1.1.0 (versionCode 2)** · identificador `com.reportesutvt` · APK firmado distribuido con Firebase App Distribution.
+
+1. Crea la llave de firma **una sola vez** y guárdala fuera del repo (si se pierde, no se puede actualizar la app):
+   ```powershell
+   mkdir $HOME\llaves
+   keytool -genkeypair -v -storetype PKCS12 -keystore $HOME\llaves\reportes-utvt.keystore -alias reportes-utvt -keyalg RSA -keysize 2048 -validity 10000
+   ```
+2. En `%USERPROFILE%\.gradle\gradle.properties` (no en el del proyecto):
+   ```
+   REPORTES_UPLOAD_STORE_FILE=C:/Users/<usuario>/llaves/reportes-utvt.keystore
+   REPORTES_UPLOAD_STORE_PASSWORD=<contraseña>
+   REPORTES_UPLOAD_KEY_ALIAS=reportes-utvt
+   REPORTES_UPLOAD_KEY_PASSWORD=<contraseña>
+   ```
+3. `npm run apk` → `android/app/build/outputs/apk/release/app-release.apk` (para pruebas y distribución directa). `npm run aab` → `.aab` para Google Play.
+4. Al liberar otra versión, sube `versionCode` y `versionName` en `android/app/build.gradle`, `version` en `package.json` y `src/version.ts`. `npm test` revisa que coincidan.
+
+La app muestra la versión, el contacto de soporte y el [aviso de privacidad](PRIVACIDAD.md) en **Acerca de** (icono ⓘ en "Mis reportes" o el enlace bajo el inicio de sesión).
+
 ## 3. Guion de pruebas (Parte 5 del documento)
 
 | # | Prueba | Cómo hacerla en la app | Resultado esperado |

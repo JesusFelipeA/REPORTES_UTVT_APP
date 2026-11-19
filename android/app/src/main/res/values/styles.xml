@@ -2,8 +2,9 @@
 
     <!-- Base application theme. -->
     <style name="AppTheme" parent="Theme.AppCompat.DayNight.NoActionBar">
-        <!-- Customize your theme here. -->
         <item name="android:editTextBackground">@drawable/rn_edit_text_material</item>
+        <!-- Mientras carga React Native se ve el logo, no una pantalla en blanco -->
+        <item name="android:windowBackground">@drawable/splash</item>
     </style>
 
 </resources>

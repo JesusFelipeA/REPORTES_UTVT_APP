@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Pantalla de arranque (Android 7 a 11): fondo azul institucional con el icono al centro -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@color/splash_fondo" />
+    <item android:width="120dp" android:height="120dp" android:gravity="center">
+        <bitmap android:src="@mipmap/ic_launcher" android:gravity="fill" />
+    </item>
+</layer-list>
