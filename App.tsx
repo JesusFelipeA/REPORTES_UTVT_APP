@@ -9,11 +9,13 @@ import { Reporte, Rol } from './src/lib/tipos';
 import DetalleScreen from './src/screens/DetalleScreen';
 import LoginScreen from './src/screens/LoginScreen';
 import NuevoReporteScreen from './src/screens/NuevoReporteScreen';
+import PermisosScreen from './src/screens/PermisosScreen';
 import ReportesScreen from './src/screens/ReportesScreen';
 
 type Pantalla =
   | { tipo: 'lista'; mensaje?: string }
   | { tipo: 'nuevo' }
+  | { tipo: 'permisos' }
   | { tipo: 'detalle'; reporte: Reporte };
 
 function App() {
@@ -85,9 +87,13 @@ function App() {
           rol={rol}
           mensaje={pantalla.mensaje}
           onNuevo={() => setPantalla({ tipo: 'nuevo' })}
+          onPermisos={() => setPantalla({ tipo: 'permisos' })}
           onAbrir={reporte => setPantalla({ tipo: 'detalle', reporte })}
           onSalir={() => cerrarSesion(uid)}
         />
+      )}
+      {pantalla.tipo === 'permisos' && (
+        <PermisosScreen onVolver={() => setPantalla({ tipo: 'lista' })} />
       )}
       {pantalla.tipo === 'nuevo' && (
         <NuevoReporteScreen

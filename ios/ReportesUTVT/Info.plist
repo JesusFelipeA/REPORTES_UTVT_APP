@@ -9,9 +9,9 @@
 	<key>CFBundleDisplayName</key>
 	<string>Reportes UTVT</string>
 	<key>NSCameraUsageDescription</key>
-	<string>Reportes UTVT necesita la cámara para tomar la foto de evidencia del reporte.</string>
+	<string>Reportes UTVT usa la cámara para tomar la foto de evidencia de la falla que reportas.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Reportes UTVT necesita acceso a tus fotos para adjuntar evidencia al reporte.</string>
+	<string>Reportes UTVT abre tus fotos solo para que elijas la imagen de evidencia del reporte.</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -39,7 +39,7 @@
 		<true/>
 	</dict>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string></string>
+	<string>Reportes UTVT usa tu ubicación solo al registrar un reporte, para indicar a mantenimiento dónde está la falla.</string>
 	<key>RCTNewArchEnabled</key>
 	<true/>
 	<key>UIApplicationSceneManifest</key>

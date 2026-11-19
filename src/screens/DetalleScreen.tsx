@@ -7,12 +7,14 @@ import {
   ImageOff,
   Lock,
   MapPin,
+  Navigation,
   RefreshCw,
 } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Image,
+  Linking,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -111,6 +113,21 @@ export default function DetalleScreen({ reporte, rol, onVolver }: Props) {
             k="Fecha de registro"
             v={fechaLarga(r.creado_en)}
           />
+          {r.latitud != null && r.longitud != null && (
+            <Dato
+              Icono={Navigation}
+              k="Coordenadas GPS"
+              v={`${r.latitud}, ${r.longitud}${
+                r.precision_m != null ? `  (±${r.precision_m} m)` : ''
+              }`}
+              accion="Ver en mapa"
+              onAccion={() =>
+                Linking.openURL(
+                  `https://www.google.com/maps/search/?api=1&query=${r.latitud},${r.longitud}`,
+                )
+              }
+            />
+          )}
           <Dato Icono={Hash} k="Folio" v={`#${r.id}`} ultimo />
         </View>
 
@@ -230,11 +247,15 @@ function Dato({
   k,
   v,
   ultimo,
+  accion,
+  onAccion,
 }: {
   Icono: typeof MapPin;
   k: string;
   v: string;
   ultimo?: boolean;
+  accion?: string;
+  onAccion?: () => void;
 }) {
   return (
     <View style={[s.dato, ultimo && { borderBottomWidth: 0 }]}>
@@ -244,6 +265,11 @@ function Dato({
       <View style={{ flex: 1 }}>
         <Text style={s.datoK}>{k}</Text>
         <Text style={s.datoV}>{v}</Text>
+        {accion && onAccion ? (
+          <Pressable onPress={onAccion} hitSlop={6}>
+            <Text style={s.datoAccion}>{accion}</Text>
+          </Pressable>
+        ) : null}
       </View>
     </View>
   );
@@ -293,6 +319,12 @@ const s = StyleSheet.create({
     fontWeight: '700',
     textTransform: 'uppercase',
     letterSpacing: 0.4,
+  },
+  datoAccion: {
+    color: C.primario,
+    fontWeight: '700',
+    fontSize: 13.5,
+    marginTop: 6,
   },
   datoV: {
     fontSize: 15,

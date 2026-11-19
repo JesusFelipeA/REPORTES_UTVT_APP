@@ -21,7 +21,7 @@ export function validarLogin(
 }
 
 export type ErroresReporte = Partial<
-  Record<'categoria' | 'ubicacion' | 'descripcion' | 'foto', string>
+  Record<'categoria' | 'ubicacion' | 'descripcion' | 'foto' | 'gps', string>
 >;
 
 /** Validaciones previas al envío (se repiten en el servidor con CHECK y RLS). */
@@ -45,6 +45,17 @@ export function validarReporte(r: NuevoReporte): ErroresReporte {
       e.foto = 'Solo se aceptan imágenes JPG o PNG.';
     else if (r.foto.fileSize && r.foto.fileSize > MAX_FOTO_BYTES)
       e.foto = 'La foto supera 5 MB.';
+  }
+  if (r.gps) {
+    const { lat, lng, precision } = r.gps;
+    if (
+      !Number.isFinite(lat) ||
+      !Number.isFinite(lng) ||
+      Math.abs(lat) > 90 ||
+      Math.abs(lng) > 180 ||
+      precision < 0
+    )
+      e.gps = 'Coordenadas inválidas.';
   }
   return e;
 }

@@ -14,7 +14,8 @@ Actividad 22 · Desarrollo Móvil Integral · Jesus Felipe Aviles
 | Consulta de reportes | `GET /rest/v1/reportes`; RLS devuelve solo los reportes autorizados |
 | Evidencia fotográfica | Cámara o galería (`react-native-image-picker`) → bucket privado `evidencias/<uid>/<uuid>.jpg`; se muestra con URL firmada de 60 min |
 | Seguridad | RLS por usuario y rol, validación cliente + servidor, sin llaves administrativas en la app, bloqueo tras 5 intentos de login |
-| Sin conexión | Mensaje claro, borrador guardado en el teléfono, reenvío automático al volver internet, lista en caché |
+| Permisos (Act. 26) | Cámara y ubicación solicitadas en tiempo de ejecución, solo al usar la función; manejo de denegado, bloqueado y revocado; pantalla **Permisos** con el estado de cada recurso |
+| Sin conexión | Mensaje claro, borrador guardado en el teléfono, reenvío automático (se revisa la conexión cada 20 s), lista en caché |
 
 ## 1. Configurar Supabase (5 min)
 
@@ -31,6 +32,10 @@ Actividad 22 · Desarrollo Móvil Integral · Jesus Felipe Aviles
    ```
 5. **Project Settings → API**: copia la *Project URL* y la llave **anon / publishable** en `src/config.ts`.
    ⚠️ Nunca uses la llave `service_role` en la app. (`src/config.ts` está en `.gitignore`; la plantilla es `src/config.example.ts`.)
+
+### Actualización Actividad 26 (coordenadas GPS)
+
+Si tu base ya existía, ejecuta una vez `supabase/migracion_actividad26.sql` en el SQL Editor. Agrega `latitud`, `longitud` y `precision_m` a `reportes`.
 
 ## 2. Ejecutar la app
 
@@ -79,3 +84,14 @@ src/screens/                 Login, Mis reportes, Nuevo reporte, Detalle
 supabase/schema.sql          Tablas, triggers, RLS y bucket privado
 __tests__/                   Pruebas unitarias (Jest)
 ```
+
+## Permisos configurados (Actividad 26)
+
+| Permiso | Tipo | Dónde se configura | Cuándo se pide |
+|---|---|---|---|
+| `INTERNET` | Normal | `AndroidManifest.xml` | Al instalar |
+| `CAMERA` | Peligroso | `AndroidManifest.xml` · `NSCameraUsageDescription` | Al pulsar **Tomar foto** |
+| `ACCESS_FINE_LOCATION` + `ACCESS_COARSE_LOCATION` | Peligroso | `AndroidManifest.xml` · `NSLocationWhenInUseUsageDescription` | Al pulsar **Usar mi ubicación actual** |
+| Galería | — | Selector de fotos del sistema | No requiere permiso |
+
+La lógica está en `src/lib/permisos.ts` y sus pruebas en `__tests__/permisos.test.ts`.

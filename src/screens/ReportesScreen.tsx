@@ -5,6 +5,7 @@ import {
   Image as IconoImagen,
   Inbox,
   LogOut,
+  ShieldCheck,
   MapPin,
   Plus,
   Search,
@@ -56,6 +57,7 @@ interface Props {
   rol: Rol;
   mensaje?: string | null;
   onNuevo: () => void;
+  onPermisos: () => void;
   onAbrir: (r: Reporte) => void;
   onSalir: () => void;
 }
@@ -66,6 +68,7 @@ export default function ReportesScreen({
   rol,
   mensaje,
   onNuevo,
+  onPermisos,
   onAbrir,
   onSalir,
 }: Props) {
@@ -174,11 +177,18 @@ export default function ReportesScreen({
         subtitulo={`Hola, ${nombre} · ${NOMBRE_ROL[rol]}`}
         titulo={rol === 'mantenimiento' ? 'Todos los reportes' : 'Mis reportes'}
         derecha={
-          <BotonIcono
-            Icono={LogOut}
-            etiqueta="Cerrar sesión"
-            onPress={onSalir}
-          />
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            <BotonIcono
+              Icono={ShieldCheck}
+              etiqueta="Permisos de la app"
+              onPress={onPermisos}
+            />
+            <BotonIcono
+              Icono={LogOut}
+              etiqueta="Cerrar sesión"
+              onPress={onSalir}
+            />
+          </View>
         }
       >
         <View style={s.stats}>

@@ -206,6 +206,9 @@ export async function registrarReporte(
         ubicacion: limpiar(r.ubicacion),
         descripcion: limpiar(r.descripcion),
         foto_path,
+        latitud: r.gps?.lat ?? null,
+        longitud: r.gps?.lng ?? null,
+        precision_m: r.gps?.precision ?? null,
         // usuario_id, fecha y estado los asigna el servidor
       })
       .select()

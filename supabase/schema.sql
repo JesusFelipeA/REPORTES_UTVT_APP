@@ -41,6 +41,9 @@ create table if not exists public.reportes (
   ubicacion   text not null check (char_length(trim(ubicacion)) between 3 and 120),
   descripcion text not null check (char_length(trim(descripcion)) between 10 and 500),
   foto_path   text,
+  latitud     double precision check (latitud between -90 and 90),
+  longitud    double precision check (longitud between -180 and 180),
+  precision_m real check (precision_m >= 0),
   estado      text not null default 'Pendiente'
               check (estado in ('Pendiente', 'En proceso', 'Resuelto')),
   creado_en   timestamptz not null default now(),

@@ -4,7 +4,9 @@ import {
   Check,
   FileText,
   Images,
+  LocateFixed,
   MapPin,
+  Navigation,
   Send,
   ShieldCheck,
   Trash2,
@@ -13,8 +15,8 @@ import React, { useState } from 'react';
 import {
   Alert,
   Image,
+  ActivityIndicator,
   KeyboardAvoidingView,
-  PermissionsAndroid,
   Platform,
   Pressable,
   ScrollView,
@@ -40,6 +42,13 @@ import {
   sombra,
 } from '../components/ui';
 import { ErrorConexion, guardarBorrador, registrarReporte } from '../lib/api';
+import {
+  abrirAjustes,
+  asegurarPermiso,
+  EstadoPermiso,
+  obtenerUbicacion,
+  permitido,
+} from '../lib/permisos';
 import { CATEGORIAS, Foto, NuevoReporte } from '../lib/tipos';
 import { ErroresReporte, validarReporte } from '../lib/validacion';
 
@@ -59,12 +68,19 @@ export default function NuevoReporteScreen({
     ubicacion: '',
     descripcion: '',
     foto: null,
+    gps: null,
   });
   const [errores, setErrores] = useState<ErroresReporte>({});
   const [errorGeneral, setErrorGeneral] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
   const [ahora] = useState(() => new Date().toISOString());
   const insets = useSafeAreaInsets();
+  const [buscandoGps, setBuscandoGps] = useState(false);
+  const [avisoGps, setAvisoGps] = useState<{
+    texto: string;
+    estado?: EstadoPermiso;
+  } | null>(null);
+  const [avisoCamara, setAvisoCamara] = useState<EstadoPermiso | null>(null);
 
   const set = <K extends keyof NuevoReporte>(k: K, v: NuevoReporte[K]) => {
     setForm(f => ({ ...f, [k]: v }));
@@ -72,23 +88,14 @@ export default function NuevoReporteScreen({
   };
 
   async function elegirFoto(origen: 'camara' | 'galeria') {
-    if (origen === 'camara' && Platform.OS === 'android') {
-      const r = await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.CAMERA,
-        {
-          title: 'Permiso de cámara',
-          message:
-            'Reportes UTVT necesita la cámara para tomar la foto de evidencia.',
-          buttonPositive: 'Permitir',
-        },
-      );
-      if (r !== PermissionsAndroid.RESULTS.GRANTED) {
-        Alert.alert(
-          'Permiso requerido',
-          'Activa el permiso de cámara en los ajustes del teléfono.',
-        );
+    if (origen === 'camara') {
+      // Se pide justo antes de abrir la cámara, no al iniciar la app
+      const estado = await asegurarPermiso('camara');
+      if (!permitido(estado)) {
+        setAvisoCamara(estado);
         return;
       }
+      setAvisoCamara(null);
     }
     const opciones: CameraOptions = {
       mediaType: 'photo',
@@ -104,6 +111,10 @@ export default function NuevoReporteScreen({
         : await launchImageLibrary({ ...opciones, selectionLimit: 1 });
     if (res.didCancel) return;
     if (res.errorCode) {
+      if (res.errorCode === 'permission') {
+        setAvisoCamara('denegado');
+        return;
+      }
       Alert.alert(
         'No se pudo obtener la foto',
         res.errorCode === 'camera_unavailable'
@@ -123,6 +134,36 @@ export default function NuevoReporteScreen({
     set('foto', foto);
     const v = validarReporte({ ...form, foto });
     if (v.foto) setErrores(e => ({ ...e, foto: v.foto }));
+  }
+
+  async function usarUbicacion() {
+    setAvisoGps(null);
+    const estado = await asegurarPermiso('ubicacion');
+    if (!permitido(estado)) {
+      setAvisoGps({
+        estado,
+        texto:
+          estado === 'bloqueado'
+            ? 'El permiso de ubicación está desactivado. Puedes escribir la ubicación manualmente o activarlo en Ajustes.'
+            : 'Sin permiso de ubicación. El reporte se puede enviar solo con la ubicación escrita.',
+      });
+      return;
+    }
+    setBuscandoGps(true);
+    try {
+      const c = await obtenerUbicacion(estado === 'concedido');
+      set('gps', c);
+      if (estado === 'aproximada')
+        setAvisoGps({
+          estado,
+          texto:
+            'Elegiste ubicación aproximada: las coordenadas tienen menor precisión.',
+        });
+    } catch (e: any) {
+      setAvisoGps({ texto: e.message });
+    } finally {
+      setBuscandoGps(false);
+    }
   }
 
   async function enviar() {
@@ -231,6 +272,61 @@ export default function NuevoReporteScreen({
             maxLength={120}
             error={errores.ubicacion}
           />
+          <Text style={s.label}>Coordenadas GPS (opcional)</Text>
+          {form.gps ? (
+            <View style={s.gps}>
+              <Navigation size={19} color={C.verde} />
+              <View style={{ flex: 1 }}>
+                <Text style={s.gpsTxt}>
+                  {form.gps.lat}, {form.gps.lng}
+                </Text>
+                <Text style={s.fechaNota}>
+                  Precisión aproximada: ±{form.gps.precision} m
+                </Text>
+              </View>
+              <Pressable
+                onPress={() => set('gps', null)}
+                hitSlop={8}
+                accessibilityLabel="Quitar coordenadas"
+              >
+                <Trash2 size={18} color={C.suave} />
+              </Pressable>
+            </View>
+          ) : (
+            <Pressable
+              onPress={usarUbicacion}
+              disabled={buscandoGps}
+              style={({ pressed }) => [s.gpsBtn, pressed && { opacity: 0.8 }]}
+            >
+              {buscandoGps ? (
+                <ActivityIndicator color={C.primario} />
+              ) : (
+                <LocateFixed size={19} color={C.primario} />
+              )}
+              <Text style={s.gpsBtnTxt}>
+                {buscandoGps
+                  ? 'Obteniendo ubicación…'
+                  : 'Usar mi ubicación actual'}
+              </Text>
+            </Pressable>
+          )}
+          {errores.gps ? <Text style={s.error}>{errores.gps}</Text> : null}
+          {avisoGps && (
+            <View style={{ marginTop: 10 }}>
+              <Aviso
+                tipo={avisoGps.estado === 'aproximada' ? 'info' : 'alerta'}
+                texto={avisoGps.texto}
+                accion={
+                  avisoGps.estado === 'bloqueado' ||
+                  avisoGps.estado === 'revocado'
+                    ? 'Ajustes'
+                    : undefined
+                }
+                onAccion={abrirAjustes}
+              />
+            </View>
+          )}
+          <View style={{ height: 16 }} />
           <Campo
             etiqueta="Descripción del problema"
             Icono={FileText}
@@ -249,7 +345,9 @@ export default function NuevoReporteScreen({
           <View style={s.fecha}>
             <Calendar size={19} color={C.primario} />
             <View style={{ flex: 1 }}>
-              <Text style={s.fechaTxt}>{fechaLarga(ahora)}</Text>
+              <Text style={s.fechaTxt}>
+                {fechaLarga(ahora).replace(/^./, c => c.toUpperCase())}
+              </Text>
               <Text style={s.fechaNota}>
                 El servidor registra la fecha oficial al enviar
               </Text>
@@ -294,6 +392,20 @@ export default function NuevoReporteScreen({
                   <Text style={s.fotoBtnTxt}>Galería</Text>
                 </Pressable>
               </View>
+            </View>
+          )}
+          {avisoCamara && (
+            <View style={{ marginTop: 12 }}>
+              <Aviso
+                tipo="alerta"
+                texto={
+                  avisoCamara === 'bloqueado'
+                    ? 'El permiso de cámara está desactivado. Actívalo en Ajustes o adjunta una foto desde la galería.'
+                    : 'Sin permiso de cámara. Puedes adjuntar una foto desde la galería, que no requiere permiso.'
+                }
+                accion={avisoCamara === 'bloqueado' ? 'Ajustes' : undefined}
+                onAccion={abrirAjustes}
+              />
             </View>
           )}
           {errores.foto ? (
@@ -364,10 +476,31 @@ const s = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: C.texto,
-    textTransform: 'capitalize',
   },
   fechaNota: { fontSize: 12, color: C.suave, marginTop: 2 },
   error: { color: C.rojo, fontSize: 12.5, marginTop: 10 },
+  gps: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    backgroundColor: C.verdeSuave,
+    borderRadius: 14,
+    padding: 12,
+  },
+  gpsTxt: { fontSize: 14.5, fontWeight: '700', color: C.texto },
+  gpsBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    height: 50,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderStyle: 'dashed',
+    borderColor: '#C9D5EA',
+    backgroundColor: '#FAFBFE',
+  },
+  gpsBtnTxt: { color: C.primario, fontWeight: '700', fontSize: 14.5 },
   fotoVacia: {
     borderWidth: 1.5,
     borderStyle: 'dashed',

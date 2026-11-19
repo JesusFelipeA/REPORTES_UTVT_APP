@@ -27,6 +27,9 @@ export interface Reporte {
   ubicacion: string;
   descripcion: string;
   foto_path: string | null;
+  latitud?: number | null;
+  longitud?: number | null;
+  precision_m?: number | null;
   estado: Estado;
   creado_en: string;
   actualizado_en?: string;
@@ -44,6 +47,8 @@ export interface NuevoReporte {
   ubicacion: string;
   descripcion: string;
   foto: Foto | null;
+  /** Coordenadas del dispositivo (solo si el usuario concede el permiso) */
+  gps?: { lat: number; lng: number; precision: number } | null;
 }
 
 /** Reporte que no se pudo enviar y quedó guardado en el dispositivo */

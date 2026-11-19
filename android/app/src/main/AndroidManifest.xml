@@ -1,8 +1,32 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
+    <!-- ===== Permisos de Reportes UTVT (Actividad 26) ===== -->
+
+    <!-- Normal: comunicación HTTPS con Supabase. Se concede al instalar. -->
     <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <!-- Peligroso: tomar la foto de evidencia. Se solicita en tiempo de ejecución. -->
     <uses-permission android:name="android.permission.CAMERA" />
+
+    <!-- Peligroso: coordenadas del reporte. Se declaran ambos para que en
+         Android 12+ el usuario pueda elegir ubicación precisa o aproximada. -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+
+    <!-- La cámara y el GPS son opcionales: la app se puede instalar en
+         dispositivos sin ellos (se escribe la ubicación y se usa la galería). -->
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+    <uses-feature android:name="android.hardware.location.gps" android:required="false" />
+
+    <!-- Permisos que agrega react-native-keychain y la app NO utiliza:
+         se eliminan del manifiesto final (principio de mínimo privilegio). -->
+    <uses-permission android:name="android.permission.USE_BIOMETRIC" tools:node="remove" />
+    <uses-permission android:name="android.permission.USE_FINGERPRINT" tools:node="remove" />
+
+    <!-- NO se declaran: READ_MEDIA_IMAGES / READ_EXTERNAL_STORAGE (se usa el
+         selector de fotos del sistema), RECORD_AUDIO (no se graba audio) ni
+         ACCESS_BACKGROUND_LOCATION (la ubicación solo se usa con la app abierta). -->
 
     <application
       android:name=".MainApplication"
