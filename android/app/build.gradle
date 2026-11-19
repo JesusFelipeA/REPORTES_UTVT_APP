@@ -82,8 +82,10 @@ android {
         applicationId "com.reportesutvt"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        // versionCode: entero que sube en cada versión publicada. versionName: lo que ve el usuario.
+        // Debe coincidir con src/version.ts (lo revisa __tests__/version.test.ts).
+        versionCode 2
+        versionName "1.1.0"
     }
     signingConfigs {
         debug {
@@ -92,15 +94,29 @@ android {
             keyAlias 'androiddebugkey'
             keyPassword 'android'
         }
+        // Firma de distribución. La llave y sus contraseñas NO van en el repo:
+        // se leen de %USERPROFILE%\.gradle\gradle.properties (ver README, "Versión de distribución").
+        if (project.hasProperty('REPORTES_UPLOAD_STORE_FILE')) {
+            release {
+                storeFile file(REPORTES_UPLOAD_STORE_FILE)
+                storePassword REPORTES_UPLOAD_STORE_PASSWORD
+                keyAlias REPORTES_UPLOAD_KEY_ALIAS
+                keyPassword REPORTES_UPLOAD_KEY_PASSWORD
+            }
+        }
     }
     buildTypes {
         debug {
             signingConfig signingConfigs.debug
         }
         release {
-            // Caution! In production, you need to generate your own keystore file.
-            // see https://reactnative.dev/docs/signed-apk-android.
-            signingConfig signingConfigs.debug
+            // Con la llave configurada firma como distribución; sin ella usa la de depuración y avisa
+            if (project.hasProperty('REPORTES_UPLOAD_STORE_FILE')) {
+                signingConfig signingConfigs.release
+            } else {
+                println "AVISO: falta REPORTES_UPLOAD_STORE_FILE; la versión release se firmará con la llave de depuración"
+                signingConfig signingConfigs.debug
+            }
             minifyEnabled enableProguardInReleaseBuilds
             proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
         }
